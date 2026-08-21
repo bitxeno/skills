@@ -1,10 +1,10 @@
 {
   "name": "bitxeno-skills",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "按分组（pack）一键安装常用 Agent Skills：npx github:bitxeno/skills <pack>",
   "type": "module",
   "bin": {
-    "skills": "./cli.mjs"
+    "skill-packs": "./cli.mjs"
   },
   "files": [
     "cli.mjs"
