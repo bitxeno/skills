@@ -37,7 +37,17 @@ const PACKS = {
   },
   'ui-design': {
     desc: '前端 UI 设计（默认装到全局）',
-    steps: [step('yetone/native-feel-skill')],
+    steps: [
+      step('yetone/native-feel-skill'),
+      step('jakubkrehel/skills', [
+        'better-ui',
+        'better-typography',
+        'better-colors',
+        'better-accessibility',
+        'better-layout',
+        'better-writing',
+      ]),
+    ],
     global: true,
   },
   'app-icon': {

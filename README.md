@@ -127,13 +127,23 @@ npx skills add zhaoxuya520/reverse-skill \
 避免 "AI slop" 风格界面，生成有设计感的前端 UI：
 
 ```bash
-npx skills add yetone/native-feel-skill -g
+npx skills add yetone/native-feel-skill -g && \
+npx skills add jakubkrehel/skills \
+  -s better-ui -s better-typography -s better-colors \
+  -s better-accessibility -s better-layout -s better-writing \
+  -g -y
 ```
 
 | Skill | 来源 | 说明 |
 |-------|------|------|
 | `frontend-design` | [anthropics/skills](https://github.com/anthropics/skills) | 确定美学方向后产出生产级界面代码 |
 | `web-design-guidelines` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | 上线前按 Web Interface Guidelines 检查质量 |
+| `better-ui` | [jakubkrehel/skills](https://github.com/jakubkrehel/skills) | 设计工程细节：圆角、阴影、动画与微交互 |
+| `better-typography` | 同上 | 字体选择与配对、字号比例、间距、换行与截断 |
+| `better-colors` | 同上 | 配色系统：构建与命名调色板、色彩语义、对比度与主题 |
+| `better-accessibility` | 同上 | 焦点态、键盘支持、ARIA、表单、屏幕阅读器与动效 |
+| `better-layout` | 同上 | 布局结构、分组、对齐、阅读顺序与自适应断点 |
+| `better-writing` | 同上 | UX 文案：从按钮标签到报错、设置与空状态 |
 
 ## App Icon 生成
 
