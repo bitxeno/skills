@@ -34,43 +34,65 @@ npx skills add spf13/go-skills --skill go -p -y
 
 ## 逆向工程
 
-适用于 iOS / Android 应用、前端 JS、二进制逆向及渗透测试、CTF 等安全研究场景，技能均来自 [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill)：
+适用于 iOS / Android 应用、前端 JS、二进制逆向及渗透测试、CTF 等安全研究场景，技能均来自 [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill)。
+
+不同方向使用不同的安装命令，按需选择；`reverse-skill-router` 为公共路由入口（各方向均建议安装），按任务自动分发到对应方法论与工具链。
+
+### iOS 逆向
 
 ```bash
 npx skills add zhaoxuya520/reverse-skill \
   -s reverse-skill-router \
   -s mobile-reverse \
+  -p -y
+```
+
+| Skill | 来源 | 说明 |
+|-------|------|------|
+| `reverse-skill-router` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | 公共路由入口，自动分发到对应技能 |
+| `mobile-reverse` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | iOS / 移动应用逆向 |
+
+### Android 逆向
+
+```bash
+npx skills add zhaoxuya520/reverse-skill \
+  -s reverse-skill-router \
   -s apk-reverse \
+  -p -y
+```
+
+| Skill | 来源 | 说明 |
+|-------|------|------|
+| `reverse-skill-router` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | 公共路由入口，自动分发到对应技能 |
+| `apk-reverse` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | APK / Android 应用逆向分析 |
+
+### Web 前端逆向
+
+```bash
+npx skills add zhaoxuya520/reverse-skill \
+  -s reverse-skill-router \
   -s js-reverse \
+  -p -y
+```
+
+| Skill | 来源 | 说明 |
+|-------|------|------|
+| `reverse-skill-router` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | 公共路由入口，自动分发到对应技能 |
+| `js-reverse` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | 前端 JS / 加密参数逆向 |
+
+### 二进制逆向（通用）
+
+```bash
+npx skills add zhaoxuya520/reverse-skill \
+  -s reverse-skill-router \
   -s ida-reverse \
   -s radare2 \
   -p -y
 ```
 
-> `reverse-skill-router` 为公共路由入口，按任务自动分发到对应方法论与工具链。
-
-### iOS 逆向
-
 | Skill | 来源 | 说明 |
 |-------|------|------|
-| `mobile-reverse` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | iOS / 移动应用逆向 |
-
-### Android 逆向
-
-| Skill | 来源 | 说明 |
-|-------|------|------|
-| `apk-reverse` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | APK / Android 应用逆向分析 |
-
-### Web 前端逆向
-
-| Skill | 来源 | 说明 |
-|-------|------|------|
-| `js-reverse` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | 前端 JS / 加密参数逆向 |
-
-### 二进制逆向（通用）
-
-| Skill | 来源 | 说明 |
-|-------|------|------|
+| `reverse-skill-router` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | 公共路由入口，自动分发到对应技能 |
 | `ida-reverse` | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | IDA Pro 二进制逆向（exe / dll / so / elf） |
 | `radare2` | 同上 | radare2 命令行二进制逆向 |
 
