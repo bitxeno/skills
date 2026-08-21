@@ -2,6 +2,32 @@
 
 个人 Agent Skills 集合，通过 [skills CLI](https://github.com/vercel-labs/agent-skills)（`npx skills`）一键安装到项目中。
 
+## 快速安装（推荐）
+
+在项目根目录按分组（pack）一键安装，无需记忆各仓库与参数：
+
+```bash
+# 查看所有分组及包含的 skill
+npx github:bitxeno/skills --list
+
+# 安装单个分组到当前项目
+npx github:bitxeno/skills swift
+
+# 一次安装多个分组
+npx github:bitxeno/skills swift go
+```
+
+| 选项 | 说明 |
+| --- | --- |
+| `-l, --list` | 列出所有分组 |
+| `-g, --global` / `-p, --project` | 覆盖默认安装位置（全局 / 当前项目） |
+| `--copy` | 复制安装而非符号链接 |
+| `--dir <path>` | 指定目标项目目录 |
+| `--dry-run` | 仅打印将执行的命令 |
+
+可用分组：`swift`、`go`、`reverse-ios`、`reverse-android`、`reverse-web`、`reverse-binary`、`ui-design`、`app-icon`。
+
+以下为各分组的手动安装方式，供参考。
 
 ## Swift 项目
 
@@ -14,10 +40,10 @@ npx skills add https://github.com/bitxeno/sqlite-data-skill -p -y
 ```
 
 | Skill | 来源 | 说明 |
-|-------|------|------|
+| --- | --- | --- |
 | `swiftui-pro` | [twostraws/swiftui-agent-skill](https://github.com/twostraws/swiftui-agent-skill) | SwiftUI 开发规范与最佳实践 |
 | `ios-application-dev` | [minimax-ai/skills](https://github.com/minimax-ai/skills) | iOS 应用开发指南，覆盖 UIKit / SnapKit / SwiftUI、HIG 与无障碍 |
-| `sqlitedata-usage-guide` | [bitxeno/sqlite-data-skill](https://github.com/bitxeno/sqlite-data-skill) | SQLiteData（SwiftData 的 SQL 轻量替代）用法指南，含 CloudKit 同步 |
+| `sqlite-data-usage-guide` | [bitxeno/sqlite-data-skill](https://github.com/bitxeno/sqlite-data-skill) | SQLiteData（SwiftData 的 SQL 轻量替代）用法指南，含 CloudKit 同步 |
 
 ## Go 项目
 
