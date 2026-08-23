@@ -4,10 +4,12 @@
 
 ## 安装方式
 
-1. 选择分组，把对应的 lock 文件复制为项目根目录的 `skills-lock.json`：
+lock 文件托管在本仓库的 `locks/` 目录下，无需克隆本仓库，在**目标项目根目录**直接下载即可：
+
+1. 选择分组，把对应的 lock 文件下载为项目根目录的 `skills-lock.json`：
 
    ```bash
-   cp locks/swift.skills-lock.json ./skills-lock.json
+   wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/swift.skills-lock.json
    ```
 
 2. 在项目根目录执行恢复：
@@ -40,7 +42,7 @@
 适用于 iOS / macOS 开发项目，包含 UI 开发规范、命令行构建、模拟器自动化、SQLiteData 用法等技能：
 
 ```bash
-cp locks/swift.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
+wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/swift.skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -54,7 +56,7 @@ cp locks/swift.skills-lock.json ./skills-lock.json && npx -y skills experimental
 适用于 Go 后端 / CLI 项目，包含 Git 工作流与代码审查类技能：
 
 ```bash
-cp locks/go.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
+wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/go.skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -70,7 +72,7 @@ cp locks/go.skills-lock.json ./skills-lock.json && npx -y skills experimental_in
 ### iOS 逆向
 
 ```bash
-cp locks/reverse-ios.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
+wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/reverse-ios.skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -81,7 +83,7 @@ cp locks/reverse-ios.skills-lock.json ./skills-lock.json && npx -y skills experi
 ### Android 逆向
 
 ```bash
-cp locks/reverse-android.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
+wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/reverse-android.skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -92,7 +94,7 @@ cp locks/reverse-android.skills-lock.json ./skills-lock.json && npx -y skills ex
 ### Web 前端逆向
 
 ```bash
-cp locks/reverse-web.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
+wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/reverse-web.skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -103,7 +105,7 @@ cp locks/reverse-web.skills-lock.json ./skills-lock.json && npx -y skills experi
 ### 二进制逆向（通用）
 
 ```bash
-cp locks/reverse-binary.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
+wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/reverse-binary.skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -140,7 +142,7 @@ npx -y skills add jakubkrehel/skills \
 纯文本视觉系统生成大胆、有个性的 App 图标，含构图规则、配色约束与小尺寸质量检查：
 
 ```bash
-cp locks/app-icon.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
+wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/app-icon.skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
