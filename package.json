@@ -1,21 +1,13 @@
 {
   "name": "bitxeno-skills",
-  "version": "1.0.1",
-  "description": "按分组（pack）一键安装常用 Agent Skills：npx github:bitxeno/skills <pack>",
-  "type": "module",
-  "bin": {
-    "skill-packs": "./cli.mjs"
-  },
-  "files": [
-    "cli.mjs",
-    "locks"
-  ],
-  "engines": {
-    "node": ">=18"
-  },
+  "version": "2.0.0",
+  "description": "按分组整理的 Agent Skills skills-lock 集合，配合 npx skills experimental_install 安装到项目",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bitxeno/skills.git"
-  }
+  },
+  "files": [
+    "locks"
+  ]
 }
