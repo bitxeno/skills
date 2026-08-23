@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "mobile-reverse": {
+      "source": "zhaoxuya520/reverse-skill",
+      "sourceType": "github",
+      "skillPath": "skills/mobile-reverse/SKILL.md",
+      "computedHash": "dfc9df9eace24c774a8cc7c9cb481727df5620098945d082cb46c48e0f3beecd"
+    },
+    "reverse-skill-router": {
+      "source": "zhaoxuya520/reverse-skill",
+      "sourceType": "github",
+      "skillPath": "skills/SKILL.md",
+      "computedHash": "4f8575f7230d0e8b5cecbd04beded90c5c4a691b98f7fa4e68ab5d34c60c0cdf"
+    }
+  }
+}

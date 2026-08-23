@@ -2,6 +2,8 @@
 
 个人 Agent Skills 集合，通过 [skills CLI](https://github.com/vercel-labs/agent-skills)（`npx skills`）一键安装到项目中。
 
+每个分类分组（pack）对应 `locks/` 下的一份 `skills-lock.json` 文件，记录该分组包含的全部 skill（来源、路径、哈希）。安装时把所选分组的条目合并进项目根目录的 `skills-lock.json`，再用 `npx skills experimental_install` 恢复到项目（`.agents/skills/`）。
+
 ## 快速安装（推荐）
 
 在项目根目录按分组（pack）一键安装，无需记忆各仓库与参数：
@@ -20,23 +22,25 @@ npx github:bitxeno/skills swift go
 | 选项 | 说明 |
 | --- | --- |
 | `-l, --list` | 列出所有分组 |
-| `-g, --global` / `-p, --project` | 覆盖默认安装位置（全局 / 当前项目） |
-| `--copy` | 复制安装而非符号链接 |
+| `-g, --global` / `-p, --project` | 仅对全局分组 `ui-design` 有效（覆盖默认安装位置） |
 | `--dir <path>` | 指定目标项目目录 |
-| `--dry-run` | 仅打印将执行的命令 |
+| `--dry-run` | 仅打印将执行的命令，不写文件 |
+
+安装流程：
+
+1. 把所选分组的 `locks/<pack>.skills-lock.json` 条目合并进目标项目根目录的 `skills-lock.json`（保留项目已有的其他条目，同名 skill 以分组为准）；
+2. 在项目目录执行 `npx -y skills experimental_install`，恢复全部条目到 `.agents/skills/`。
 
 可用分组：`swift`、`go`、`reverse-ios`、`reverse-android`、`reverse-web`、`reverse-binary`、`ui-design`、`app-icon`。
 
-以下为各分组的手动安装方式，供参考。
+以下为各分组的手动安装方式，供参考（等价于把对应 lock 文件复制为项目根目录的 `skills-lock.json` 后执行 `npx -y skills experimental_install`）。
 
 ## Swift 项目
 
 适用于 iOS / macOS 开发项目，包含 UI 开发规范、命令行构建、模拟器自动化、SQLiteData 用法等技能：
 
 ```bash
-npx skills add twostraws/swiftui-agent-skill --skill swiftui-pro -p -y  && \
-npx skills add minimax-ai/skills --skill ios-application-dev -p -y && \
-npx skills add https://github.com/bitxeno/sqlite-data-skill -p -y
+cp locks/swift.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -50,27 +54,23 @@ npx skills add https://github.com/bitxeno/sqlite-data-skill -p -y
 适用于 Go 后端 / CLI 项目，包含 Git 工作流与代码审查类技能：
 
 ```bash
-npx skills add spf13/go-skills --skill go -p -y
+cp locks/go.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
 |-------|------|------|
 | `go` | [spf13/go-skills](https://github.com/spf13/go-skills) | Go 开发规范与最佳实践 |
 
-
 ## 逆向工程
 
 适用于 iOS / Android 应用、前端 JS、二进制逆向及渗透测试、CTF 等安全研究场景，技能均来自 [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill)。
 
-不同方向使用不同的安装命令，按需选择；`reverse-skill-router` 为公共路由入口（各方向均建议安装），按任务自动分发到对应方法论与工具链。
+不同方向对应不同的 lock 文件，按需选择；`reverse-skill-router` 为公共路由入口（各方向均包含），按任务自动分发到对应方法论与工具链。
 
 ### iOS 逆向
 
 ```bash
-npx skills add zhaoxuya520/reverse-skill \
-  -s reverse-skill-router \
-  -s mobile-reverse \
-  -p -y
+cp locks/reverse-ios.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -81,10 +81,7 @@ npx skills add zhaoxuya520/reverse-skill \
 ### Android 逆向
 
 ```bash
-npx skills add zhaoxuya520/reverse-skill \
-  -s reverse-skill-router \
-  -s apk-reverse \
-  -p -y
+cp locks/reverse-android.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -95,10 +92,7 @@ npx skills add zhaoxuya520/reverse-skill \
 ### Web 前端逆向
 
 ```bash
-npx skills add zhaoxuya520/reverse-skill \
-  -s reverse-skill-router \
-  -s js-reverse \
-  -p -y
+cp locks/reverse-web.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -109,11 +103,7 @@ npx skills add zhaoxuya520/reverse-skill \
 ### 二进制逆向（通用）
 
 ```bash
-npx skills add zhaoxuya520/reverse-skill \
-  -s reverse-skill-router \
-  -s ida-reverse \
-  -s radare2 \
-  -p -y
+cp locks/reverse-binary.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -124,7 +114,7 @@ npx skills add zhaoxuya520/reverse-skill \
 
 ## UI 设计
 
-避免 "AI slop" 风格界面，生成有设计感的前端 UI：
+避免 "AI slop" 风格界面，生成有设计感的前端 UI。该分组默认安装到**全局**（`experimental_install` 仅支持项目级恢复，因此直接使用 `skills add`）：
 
 ```bash
 npx skills add yetone/native-feel-skill -g && \
@@ -150,8 +140,7 @@ npx skills add jakubkrehel/skills \
 纯文本视觉系统生成大胆、有个性的 App 图标，含构图规则、配色约束与小尺寸质量检查：
 
 ```bash
-npx skills add https://github.com/chunkithwang/design-playful-app-icons --skill design-playful-app-icons -p -y && \
-npx skills add https://github.com/s1dashu/ip-as-logo-skill -p -y
+cp locks/app-icon.skills-lock.json ./skills-lock.json && npx -y skills experimental_install
 ```
 
 | Skill | 来源 | 说明 |
@@ -170,6 +159,9 @@ npx -y skills update <skill-name>
 
 # 移除
 npx -y skills remove <skill-name> -y
+
+# 从项目根目录的 skills-lock.json 恢复（experimental_install 安装的同样适用）
+npx -y skills experimental_install
 ```
 
-> 默认以符号链接方式安装，便于通过 `update` 同步；如需独立副本可加 `--copy`。
+> 安装方式由 skills CLI 默认决定（符号链接 / 复制），本仓库 CLI 不再透传 `--copy`。

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "apk-reverse": {
+      "source": "zhaoxuya520/reverse-skill",
+      "sourceType": "github",
+      "skillPath": "skills/apk-reverse/SKILL.md",
+      "computedHash": "e9368bc638983f89d8a17044282f647495761cb74ef3fa378a7417aea519b89b"
+    },
+    "reverse-skill-router": {
+      "source": "zhaoxuya520/reverse-skill",
+      "sourceType": "github",
+      "skillPath": "skills/SKILL.md",
+      "computedHash": "4f8575f7230d0e8b5cecbd04beded90c5c4a691b98f7fa4e68ab5d34c60c0cdf"
+    }
+  }
+}

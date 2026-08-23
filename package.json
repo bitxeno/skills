@@ -7,7 +7,8 @@
     "skill-packs": "./cli.mjs"
   },
   "files": [
-    "cli.mjs"
+    "cli.mjs",
+    "locks"
   ],
   "engines": {
     "node": ">=18"
