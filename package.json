@@ -1,6 +1,6 @@
 {
   "name": "bitxeno-skills",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "按分组整理的 Agent Skills 集合，一条命令安装分组到项目（npx github:bitxeno/skills install ios）",
   "license": "MIT",
   "type": "module",
@@ -12,8 +12,7 @@
     "skillpacks": "bin/skillpacks.mjs"
   },
   "files": [
-    "bin",
-    "locks"
+    "bin"
   ],
   "engines": {
     "node": ">=18"

@@ -11,21 +11,14 @@
  *
  * 设计要点：
  *  - CLI 只做「分组名 → (源仓库, skill 名列表)」的映射，不自己下载技能。
- *  - 映射来自 locks/*.json（本地检出优先，否则从 main 分支实时拉取），
- *    所以增删 skill 只需改 lock，不必重新发版。
- *  - lock 里的 computedHash 只作参考，不参与判断：上游更新后照样能装到最新。
+ *  - 分组定义就是下面这张表，增删 skill 直接改它。
+ *  - 不校验任何 hash：上游更新后照样能装到最新。
  *  - 同一源仓库的多个 skill 合并成一次 `skills add`，只 clone 一次。
  */
 import { spawn } from 'node:child_process'
-import { readFile, readdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 import process from 'node:process'
-
-/** lock 文件所在目录（本地/远端二选一） */
-const DEFAULT_LOCK_BASE = 'https://raw.githubusercontent.com/bitxeno/skills/main/locks'
-const LOCAL_LOCK_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'locks')
 
 /** 常用简称 → 实际分组名 */
 const ALIASES = {
@@ -39,13 +32,51 @@ const ALIASES = {
   icon: 'app-icon',
 }
 
-/** 不走 lock 文件的分组：直接写死源与 skill */
-const BUILTIN_PACKS = {
+/**
+ * 全部分组定义。
+ *
+ * steps: [源仓库, skill 名列表]
+ *   - skill 名列表为空数组 `[]` 表示安装该仓库下的全部 skill。
+ *   - 同一源仓库写一条即可，多个 skill 会用一次 `skills add` 装完。
+ * global: true 表示该分组默认装到用户目录（可用 -p 覆盖为项目级）。
+ */
+const PACKS = {
+  swift: {
+    desc: 'Swift / iOS / macOS 开发',
+    steps: [
+      ['twostraws/swiftui-agent-skill', ['swiftui-pro']],
+      ['minimax-ai/skills', ['ios-application-dev']],
+      ['bitxeno/sqlite-data-skill', ['sqlite-data-usage-guide']],
+    ],
+  },
+  go: {
+    desc: 'Go 后端 / CLI 开发',
+    steps: [['spf13/go-skills', ['go']]],
+  },
+  rust: {
+    desc: 'Rust 开发（遗留代码迁移到 Rust）',
+    steps: [['google/skills', ['migrate-to-rust']]],
+  },
+  'reverse-ios': {
+    desc: 'iOS / 移动应用逆向',
+    steps: [['zhaoxuya520/reverse-skill', ['reverse-skill-router', 'mobile-reverse']]],
+  },
+  'reverse-android': {
+    desc: 'Android 应用逆向',
+    steps: [['zhaoxuya520/reverse-skill', ['reverse-skill-router', 'apk-reverse']]],
+  },
+  'reverse-web': {
+    desc: 'Web 前端 / JS 逆向',
+    steps: [['zhaoxuya520/reverse-skill', ['reverse-skill-router', 'js-reverse']]],
+  },
+  'reverse-binary': {
+    desc: '二进制逆向（IDA / radare2）',
+    steps: [['zhaoxuya520/reverse-skill', ['reverse-skill-router', 'ida-reverse', 'radare2']]],
+  },
   'ui-design': {
-    desc: '前端 UI 设计（默认装到全局）',
+    desc: '前端 UI 设计',
     global: true,
     steps: [
-      // [源仓库, skill 名列表；空数组表示装该仓库全部 skill]
       ['anthropics/skills', ['frontend-design']],
       ['vercel-labs/agent-skills', ['web-design-guidelines']],
       [
@@ -62,6 +93,13 @@ const BUILTIN_PACKS = {
       ['yetone/native-feel-skill', []],
     ],
   },
+  'app-icon': {
+    desc: 'App 图标生成',
+    steps: [
+      ['chunkithwang/design-playful-app-icons', ['design-playful-app-icons']],
+      ['s1dashu/ip-as-logo-skill', ['ip-as-logo']],
+    ],
+  },
 }
 
 const c = (code, s) => (process.stdout.isTTY && !process.env.NO_COLOR ? `\x1b[${code}m${s}\x1b[0m` : s)
@@ -70,7 +108,6 @@ const bold = (s) => c(1, s)
 const cyan = (s) => c(36, s)
 const green = (s) => c(32, s)
 const red = (s) => c(31, s)
-const yellow = (s) => c(33, s)
 
 const USAGE = `${bold('skillpacks')} — 按分组一键安装 Agent Skills（始终安装上游最新版）
 
@@ -98,7 +135,7 @@ const USAGE = `${bold('skillpacks')} — 按分组一键安装 Agent Skills（�
 示例
   npx -y github:bitxeno/skills list
   npx -y github:bitxeno/skills install ios
-  npx -y github:bitxeno/skills install ios go
+  npx -y github:bitxeno/skills install ios go rust
   npx -y github:bitxeno/skills install reverse-web --dir ./MyApp
   npx -y github:bitxeno/skills install icon --dry-run
 `
@@ -150,84 +187,17 @@ function fail(message) {
   process.exit(2)
 }
 
-/** 读取本地 lock 目录里所有分组的名字 */
-async function listLocalPacks() {
-  if (!existsSync(LOCAL_LOCK_DIR)) return []
-  const entries = await readdir(LOCAL_LOCK_DIR)
-  return entries
-    .filter((name) => name.endsWith('.skills-lock.json'))
-    .map((name) => name.slice(0, -'.skills-lock.json'.length))
-}
-
-/**
- * 从远端枚举分组：本地没有 locks/ 时（例如只装了单个 bin 文件）用来支撑 list。
- * 优先 GitHub Contents API，失败则退回已知分组名，保证 list 永远有输出。
- */
-async function listRemotePacks() {
-  const api = process.env.SKILLPACKS_LIST_API
-    || 'https://api.github.com/repos/bitxeno/skills/contents/locks'
-  try {
-    const res = await fetch(api, { headers: { Accept: 'application/vnd.github+json' } })
-    if (res.ok) {
-      const items = await res.json()
-      if (Array.isArray(items)) {
-        const names = items
-          .map((item) => item?.name ?? '')
-          .filter((name) => name.endsWith('.skills-lock.json'))
-          .map((name) => name.slice(0, -'.skills-lock.json'.length))
-        if (names.length > 0) return names
-      }
-    }
-  } catch {
-    /* 网络不可用时静默降级 */
-  }
-  return ['swift', 'go', 'reverse-ios', 'reverse-android', 'reverse-web', 'reverse-binary', 'app-icon']
-}
-
-/** 拉取某分组的 lock 内容：本地检出优先，否则走 raw URL */
-async function loadLock(packName) {
-  const file = join(LOCAL_LOCK_DIR, `${packName}.skills-lock.json`)
-  if (existsSync(file)) return JSON.parse(await readFile(file, 'utf8'))
-
-  const base = process.env.SKILLPACKS_LOCK_BASE || DEFAULT_LOCK_BASE
-  const url = `${base.replace(/\/$/, '')}/${packName}.skills-lock.json`
-  let res
-  try {
-    res = await fetch(url)
-  } catch (error) {
-    throw new Error(`无法连接 lock 源 ${url}：${error.message}`)
-  }
-  if (res.status === 404) throw new Error(`未知分组：${packName}`)
-  if (!res.ok) throw new Error(`下载 lock 失败（${res.status}）：${url}`)
-  return JSON.parse(await res.text())
-}
-
-/** 把 lock 转成 [(源仓库, [skill 名])]，同源合并 */
-function lockToSteps(lock, packName) {
-  const bySource = new Map()
-  for (const [skill, entry] of Object.entries(lock.skills ?? {})) {
-    if (entry.sourceType && entry.sourceType !== 'github' && entry.sourceType !== 'git') {
-      log(yellow(`  ! 跳过 ${skill}：暂不支持 sourceType=${entry.sourceType}`))
-      continue
-    }
-    if (!entry.source) {
-      log(yellow(`  ! 跳过 ${skill}：lock 里缺少 source`))
-      continue
-    }
-    bySource.set(entry.source, [...(bySource.get(entry.source) ?? []), skill])
-  }
-  if (bySource.size === 0) throw new Error(`分组 ${packName} 里没有可安装的 skill`)
-  return [...bySource]
-}
-
-/** 解析分组 → { steps, global } */
-async function resolvePack(rawName) {
+/** 解析分组名（含简称）→ { name, steps, global, desc } */
+function resolvePack(rawName) {
   const name = ALIASES[rawName] ?? rawName
-  const builtin = BUILTIN_PACKS[name]
-  if (builtin) return { name, steps: builtin.steps, global: builtin.global === true, desc: builtin.desc }
-
-  const lock = await loadLock(name)
-  return { name, steps: lockToSteps(lock, name), global: false }
+  const pack = PACKS[name]
+  if (!pack) throw new Error(`未知分组：${rawName}`)
+  return {
+    name,
+    steps: pack.steps,
+    global: pack.global === true,
+    desc: pack.desc ?? '',
+  }
 }
 
 /** 组装单条 skills add 的 argv */
@@ -252,9 +222,7 @@ function runNpx(args, cwd) {
 }
 
 async function cmdList() {
-  let localPacks = await listLocalPacks()
-  if (localPacks.length === 0) localPacks = await listRemotePacks()
-  const names = [...new Set([...Object.keys(BUILTIN_PACKS), ...localPacks])].sort()
+  const names = Object.keys(PACKS).sort()
 
   log(bold('可用分组') + dim(`（共 ${names.length} 个）`))
   log()

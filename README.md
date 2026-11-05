@@ -1,6 +1,6 @@
 # skills
 
-个人 Agent Skills 集合。每个分类分组（pack）对应 `locks/` 下的一份 `skills-lock.json` 文件，记录该分组包含的全部 skill（来源、路径、哈希）。
+个人 Agent Skills 集合。分组（pack）定义集中在 `bin/skillpacks.mjs` 的 `PACKS` 表里，一个分组对应一组来源仓库与 skill 名。
 
 安装用本仓库自带的 `skillpacks` CLI，一条命令搞定，且**每次都会装到上游最新版**（`npx skills experimental_install` 那个老路子在技能已存在时会直接跳过、不会更新，见文末说明）。
 
@@ -40,6 +40,7 @@ npx -y github:bitxeno/skills install ios --dry-run
 | --- | --- | --- |
 | `swift` | `ios` / `mac` / `macos` | Swift / iOS / macOS 开发 |
 | `go` | — | Go 后端 / CLI 开发 |
+| `rust` | — | Rust 开发（遗留代码迁移到 Rust） |
 | `reverse-ios` | — | iOS / 移动应用逆向 |
 | `reverse-android` | `android` | Android 应用逆向 |
 | `reverse-web` | `web` | Web 前端 / JS 逆向 |
@@ -52,17 +53,17 @@ npx -y github:bitxeno/skills install ios --dry-run
 `skillpacks` 底层只调用 vercel 的 `skills add`，**不自己下载技能**：
 
 - 技能已存在时，`skills add` 会**覆盖刷新到上游最新**；而 `experimental_install` 见到 `.agents/skills/<name>/SKILL.md` 就直接跳过，永远停在第一次装的那版。
-- 不受 lock 里 `computedHash` 约束。上游内容变了照样能装，不会在 CI 里因 `--frozen-lockfile` 报 “has changed since skills-lock.json was written”。
+- 不校验任何 hash，上游内容变了照样能装，不会在 CI 里因 `--frozen-lockfile` 报 “has changed since skills-lock.json was written”。
 - 按 **skill 名**而不是路径发现，上游调整目录结构也不影响。
-- 分组映射实时读 `locks/*.json`，增删 skill 只需改 lock，**不用重新发版 CLI**。
+- 分组定义就是 `bin/skillpacks.mjs` 里的一张表，位置一目了然。
 
 ## 工作原理
 
 `bin/skillpacks.mjs` 把分组名翻译成若干条 `npx -y skills@latest add <repo> -s <skill> -p -y` 并依次执行：
 
 - 同一源仓库的多个 skill 合并成一次 `add`，只 clone 一次。
-- 分组定义来自 `locks/<pack>.skills-lock.json`（本地检出优先，`npx` 场景下从 `main` 分支实时拉取）。
-- `ui-design` 不便于用 lock 表达（默认装全局），在 CLI 里内置。
+- 分组定义集中在 `bin/skillpacks.mjs` 的 `PACKS` 表：`[源仓库, [skill 名...]]`，空数组表示装该仓库全部 skill。
+- `ui-design` 默认装到全局，用 `-p` 可改为项目级。
 
 
 ## Swift 项目
@@ -90,6 +91,18 @@ npx -y github:bitxeno/skills install go
 | Skill | 来源 | 说明 |
 |-------|------|------|
 | `go` | [spf13/go-skills](https://github.com/spf13/go-skills) | Go 开发规范与最佳实践 |
+
+## Rust 项目
+
+适用于把遗留代码库（C++ / Fortran / Java / Python / C / Shell）迁移到 Rust 的场景：
+
+```bash
+npx -y github:bitxeno/skills install rust
+```
+
+| Skill | 来源 | 说明 |
+|-------|------|------|
+| `migrate-to-rust` | [google/skills](https://github.com/google/skills/tree/main/skills/developers/migrate-to-rust) | 克隆并分析遗留代码库，规划到 100% Safe Rust 的迁移，跟踪遥测与 PGO，产出报告与 HTML 信息图 |
 
 ## 逆向工程
 
@@ -205,13 +218,23 @@ npx -y skills remove <skill-name> -y
 
 ## 维护本仓库
 
-新增/调整某个分组时，只改 `locks/<pack>.skills-lock.json` 即可，`skillpacks` 会实时读取，无需发布新版本。刷新某个分组 lock 里的 `computedHash` 到上游最新：
+新增/调整某个分组时，直接改 `bin/skillpacks.mjs` 里的 `PACKS` 表：
+
+```js
+rust: {
+  desc: 'Rust 开发（遗留代码迁移到 Rust）',
+  steps: [['google/skills', ['migrate-to-rust']]],
+},
+```
+
+- `steps` 每项是 `[源仓库, [skill 名...]]`；skill 名写成空数组 `[]` 表示装该仓库全部 skill。
+- 同一源仓库只写一条，多个 skill 会用一次 `skills add` 装完。
+- 想让某分组默认装到全局，加 `global: true`（用户可用 `-p` 覆盖）。
+- 改完 `npx -y github:bitxeno/skills list` 自查一遍即可，无需生成或维护任何 lock 文件。
+
+新增来源前建议先确认 skill 名，避免写错（名字错会报 `No matching skills found`）：
 
 ```bash
-mkdir -p /tmp/refresh && cd /tmp/refresh
-curl -fsSLO https://raw.githubusercontent.com/bitxeno/skills/main/locks/swift.skills-lock.json
-mv swift.skills-lock.json skills-lock.json
-npx -y skills experimental_install --force --no-frozen-lockfile
-cp skills-lock.json <repo>/locks/swift.skills-lock.json
+npx -y skills@latest add google/skills -l    # 列出该仓库所有 skill 名
 ```
 
