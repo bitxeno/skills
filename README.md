@@ -1,48 +1,76 @@
 # skills
 
-个人 Agent Skills 集合。每个分类分组（pack）对应 `locks/` 下的一份 `skills-lock.json` 文件，记录该分组包含的全部 skill（来源、路径、哈希）。使用 [skills CLI](https://github.com/vercel-labs/agent-skills) 的 `npx skills experimental_install` 一键恢复到项目（`.agents/skills/`）。
+个人 Agent Skills 集合。每个分类分组（pack）对应 `locks/` 下的一份 `skills-lock.json` 文件，记录该分组包含的全部 skill（来源、路径、哈希）。
 
-## 安装方式
+安装用本仓库自带的 `skillpacks` CLI，一条命令搞定，且**每次都会装到上游最新版**（`npx skills experimental_install` 那个老路子在技能已存在时会直接跳过、不会更新，见文末说明）。
 
-lock 文件托管在本仓库的 `locks/` 目录下，无需克隆本仓库，在**目标项目根目录**直接下载即可：
+## 快速安装（推荐）
 
-1. 选择分组，把对应的 lock 文件下载为项目根目录的 `skills-lock.json`：
+在**目标项目根目录**执行：
 
-   ```bash
-   wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/swift.skills-lock.json
-   ```
+```bash
+# 查看所有分组
+npx -y github:bitxeno/skills list
 
-2. 在项目根目录执行恢复：
+# 安装单个分组
+npx -y github:bitxeno/skills install ios
 
-   ```bash
-   npx -y skills experimental_install
-   ```
+# 一次装多个分组
+npx -y github:bitxeno/skills install ios go
 
-`experimental_install` 读取项目根目录的 `skills-lock.json`，按来源分组把其中的 skill 全部安装到 `.agents/skills/`（项目级，多个 agent 通用）。重复执行会保持幂等。
+# 装到别的目录
+npx -y github:bitxeno/skills install reverse-web --dir ./MyApp
 
-> 若项目已有 `skills-lock.json`（例如已装过其他 skill），可手动把新分组的 `skills` 条目合并进去（同名 skill 以新分组为准），再执行 `experimental_install`。
+# 只看会执行什么命令
+npx -y github:bitxeno/skills install ios --dry-run
+```
 
-可用分组及对应 lock 文件：
+| 选项 | 说明 |
+| --- | --- |
+| `-p, --project` | 装到当前项目（默认） |
+| `-g, --global` | 装到用户目录，覆盖分组的默认位置 |
+| `--copy` | 复制文件而非符号链接 |
+| `--dir <path>` | 指定目标项目目录 |
+| `--dry-run` | 只打印将执行的命令 |
+| `-h, --help` | 显示帮助 |
 
-| 分组 | lock 文件 | 说明 |
+可用分组与简称：
+
+| 分组 | 简称 | 说明 |
 | --- | --- | --- |
-| swift | `locks/swift.skills-lock.json` | Swift / iOS / macOS 开发 |
-| go | `locks/go.skills-lock.json` | Go 后端 / CLI 开发 |
-| reverse-ios | `locks/reverse-ios.skills-lock.json` | iOS / 移动应用逆向 |
-| reverse-android | `locks/reverse-android.skills-lock.json` | Android 应用逆向 |
-| reverse-web | `locks/reverse-web.skills-lock.json` | Web 前端 / JS 逆向 |
-| reverse-binary | `locks/reverse-binary.skills-lock.json` | 二进制逆向（IDA / radare2） |
-| ui-design | 无（全局安装，见下） | 前端 UI 设计 |
-| app-icon | `locks/app-icon.skills-lock.json` | App 图标生成 |
+| `swift` | `ios` / `mac` / `macos` | Swift / iOS / macOS 开发 |
+| `go` | — | Go 后端 / CLI 开发 |
+| `reverse-ios` | — | iOS / 移动应用逆向 |
+| `reverse-android` | `android` | Android 应用逆向 |
+| `reverse-web` | `web` | Web 前端 / JS 逆向 |
+| `reverse-binary` | `bin` / `binary` | 二进制逆向（IDA / radare2） |
+| `app-icon` | `icon` | App 图标生成 |
+| `ui-design` | — | 前端 UI 设计（默认装到全局） |
 
-以下为各分组的具体安装命令与包含的 skill。
+### 它和 `experimental_install` 的区别
+
+`skillpacks` 底层只调用 vercel 的 `skills add`，**不自己下载技能**：
+
+- 技能已存在时，`skills add` 会**覆盖刷新到上游最新**；而 `experimental_install` 见到 `.agents/skills/<name>/SKILL.md` 就直接跳过，永远停在第一次装的那版。
+- 不受 lock 里 `computedHash` 约束。上游内容变了照样能装，不会在 CI 里因 `--frozen-lockfile` 报 “has changed since skills-lock.json was written”。
+- 按 **skill 名**而不是路径发现，上游调整目录结构也不影响。
+- 分组映射实时读 `locks/*.json`，增删 skill 只需改 lock，**不用重新发版 CLI**。
+
+## 工作原理
+
+`bin/skillpacks.mjs` 把分组名翻译成若干条 `npx -y skills@latest add <repo> -s <skill> -p -y` 并依次执行：
+
+- 同一源仓库的多个 skill 合并成一次 `add`，只 clone 一次。
+- 分组定义来自 `locks/<pack>.skills-lock.json`（本地检出优先，`npx` 场景下从 `main` 分支实时拉取）。
+- `ui-design` 不便于用 lock 表达（默认装全局），在 CLI 里内置。
+
 
 ## Swift 项目
 
 适用于 iOS / macOS 开发项目，包含 UI 开发规范、命令行构建、模拟器自动化、SQLiteData 用法等技能：
 
 ```bash
-wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/swift.skills-lock.json && npx -y skills experimental_install
+npx -y github:bitxeno/skills install ios
 ```
 
 | Skill | 来源 | 说明 |
@@ -56,7 +84,7 @@ wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/
 适用于 Go 后端 / CLI 项目，包含 Git 工作流与代码审查类技能：
 
 ```bash
-wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/go.skills-lock.json && npx -y skills experimental_install
+npx -y github:bitxeno/skills install go
 ```
 
 | Skill | 来源 | 说明 |
@@ -72,7 +100,7 @@ wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/
 ### iOS 逆向
 
 ```bash
-wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/reverse-ios.skills-lock.json && npx -y skills experimental_install
+npx -y github:bitxeno/skills install reverse-ios
 ```
 
 | Skill | 来源 | 说明 |
@@ -83,7 +111,7 @@ wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/
 ### Android 逆向
 
 ```bash
-wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/reverse-android.skills-lock.json && npx -y skills experimental_install
+npx -y github:bitxeno/skills install reverse-android
 ```
 
 | Skill | 来源 | 说明 |
@@ -94,7 +122,7 @@ wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/
 ### Web 前端逆向
 
 ```bash
-wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/reverse-web.skills-lock.json && npx -y skills experimental_install
+npx -y github:bitxeno/skills install reverse-web
 ```
 
 | Skill | 来源 | 说明 |
@@ -105,7 +133,7 @@ wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/
 ### 二进制逆向（通用）
 
 ```bash
-wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/reverse-binary.skills-lock.json && npx -y skills experimental_install
+npx -y github:bitxeno/skills install reverse-binary
 ```
 
 | Skill | 来源 | 说明 |
@@ -116,14 +144,16 @@ wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/
 
 ## UI 设计
 
-避免 "AI slop" 风格界面，生成有设计感的前端 UI。该分组默认安装到**全局**（`experimental_install` 仅支持项目级恢复，因此使用 `skills add`）：
+避免 "AI slop" 风格界面，生成有设计感的前端 UI。该分组默认安装到**全局**：
 
 ```bash
-npx -y skills add yetone/native-feel-skill -g && \
-npx -y skills add jakubkrehel/skills \
-  -s better-ui -s better-typography -s better-colors \
-  -s better-accessibility -s better-layout -s better-writing \
-  -g -y
+npx -y github:bitxeno/skills install ui-design
+```
+
+装到当前项目而非全局时加 `-p`：
+
+```bash
+npx -y github:bitxeno/skills install ui-design -p
 ```
 
 | Skill | 来源 | 说明 |
@@ -142,7 +172,7 @@ npx -y skills add jakubkrehel/skills \
 纯文本视觉系统生成大胆、有个性的 App 图标，含构图规则、配色约束与小尺寸质量检查：
 
 ```bash
-wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/locks/app-icon.skills-lock.json && npx -y skills experimental_install
+npx -y github:bitxeno/skills install icon
 ```
 
 | Skill | 来源 | 说明 |
@@ -156,14 +186,32 @@ wget -qO skills-lock.json https://raw.githubusercontent.com/bitxeno/skills/main/
 # 列出已安装
 npx -y skills list
 
-# 更新
+# 更新到最新（重跑一次 skillpacks 即可，install 是幂等且会刷新的）
+npx -y github:bitxeno/skills install ios
+
+# 只看哪些技能有新版本（有更新时 exit 1，可用于 CI 门禁）
+npx -y skills check
+
+# 更新（逐个 skill）
 npx -y skills update <skill-name>
 
 # 移除
 npx -y skills remove <skill-name> -y
-
-# 从项目根目录的 skills-lock.json 恢复 / 重装
-npx -y skills experimental_install
 ```
 
+> **注意**：`npx -y skills experimental_install` 只在技能**不存在**时安装，已装过会直接跳过、不会更新到最新；且它校验 lock 里的 `computedHash`，在 CI 环境（`CI` / `GITHUB_ACTIONS` 等变量存在）下默认 `--frozen-lockfile`，hash 不一致会报 `has changed since skills-lock.json was written` 并 exit 1。**日常更新请用 `skillpacks install`**，它走的是 `skills add`，会覆盖刷新。
+
 > 单独添加某个 skill 也可以直接用 `npx skills add <repo> -s <skill> -p -y`，会自动写回项目的 `skills-lock.json`。
+
+## 维护本仓库
+
+新增/调整某个分组时，只改 `locks/<pack>.skills-lock.json` 即可，`skillpacks` 会实时读取，无需发布新版本。刷新某个分组 lock 里的 `computedHash` 到上游最新：
+
+```bash
+mkdir -p /tmp/refresh && cd /tmp/refresh
+curl -fsSLO https://raw.githubusercontent.com/bitxeno/skills/main/locks/swift.skills-lock.json
+mv swift.skills-lock.json skills-lock.json
+npx -y skills experimental_install --force --no-frozen-lockfile
+cp skills-lock.json <repo>/locks/swift.skills-lock.json
+```
+
